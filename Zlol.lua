@@ -200,6 +200,26 @@ NeverLose.ScreenGui = GlobalWindow;
 NeverLose.Flags = {};
 NeverLose.AccentColor = Color3.fromRGB(78, 127, 252);
 NeverLose.OutlineColor = Color3.fromRGB(255, 45, 45);
+NeverLose.TabIconOverrides = {
+	combat = "rbxassetid://116271048134258",
+};
+
+-- Если ID относится к Decal, достаём из него настоящую картинку (Texture)
+NeverLose.ResolveImage = function(asset, callback)
+	task.spawn(function()
+		local ok, res = pcall(function()
+			local obj = game:GetObjects(asset)[1];
+
+			if obj and (obj:IsA('Decal') or obj:IsA('Texture')) then
+				return obj.Texture;
+			end;
+		end);
+
+		if ok and typeof(res) == 'string' and res ~= '' then
+			callback(res);
+		end;
+	end);
+end;
 NeverLose.MainColor = Color3.fromRGB(8, 8, 13);
 NeverLose.RegisiteryColor = {};
 NeverLose.NameRegisitry = {};
@@ -4771,6 +4791,40 @@ function NeverLose:CreateWindow(Config)
 		TabIcon.TextSize = 16.000
 		TabIcon.TextWrapped = true
 
+		do
+			local CustomIcon = NeverLose.TabIconOverrides[string.lower(tostring(Config.Name))];
+
+			if not CustomIcon and typeof(Config.Icon) == 'string' and (string.find(Config.Icon , 'rbxassetid://' , 1 , true) or tonumber(Config.Icon)) then
+				CustomIcon = (tonumber(Config.Icon) and ('rbxassetid://'..Config.Icon)) or Config.Icon;
+			end;
+
+			if CustomIcon then
+				local TabImage = Instance.new("ImageLabel")
+
+				TabIcon.Text = "";
+
+				TabImage.Name = NeverLose.RandomString();
+				TabImage.Parent = TabButton
+				TabImage.AnchorPoint = Vector2.new(0, 0.5)
+				TabImage.BackgroundTransparency = 1.000
+				TabImage.BorderSizePixel = 0
+				TabImage.Position = UDim2.new(0, 5, 0.5, 0)
+				TabImage.Size = UDim2.new(0, 20, 0, 20)
+				TabImage.ZIndex = 9
+				TabImage.Image = CustomIcon
+				TabImage.ImageColor3 = NeverLose.IconColor
+				TabImage.ImageTransparency = TabIcon.TextTransparency
+
+				NeverLose.ResolveImage(CustomIcon , function(real)
+					TabImage.Image = real;
+				end);
+
+				NeverLose:AddSignal(TabIcon:GetPropertyChangedSignal('TextTransparency'):Connect(function()
+					TabImage.ImageTransparency = TabIcon.TextTransparency;
+				end));
+			end;
+		end;
+
 		TabContentLabel.Name = NeverLose.RandomString();
 		TabContentLabel.Parent = TabButton
 		TabContentLabel.AnchorPoint = Vector2.new(0, 0.5)
@@ -6012,10 +6066,8 @@ function NeverLose:CreateWindow(Config)
 
 			local Frame = Instance.new("Frame")
 			local Content = Instance.new("TextLabel")
-			Watermark_lb.BlockCount = (Watermark_lb.BlockCount or 0) + 1;
-
 			local IsAssetStr = typeof(IconStr) == 'string' and (string.find(IconStr , 'rbxassetid://' , 1 , true) ~= nil or tonumber(IconStr) ~= nil);
-			local UseImage = (Watermark_lb.BlockCount == 1) or IsAssetStr;
+			local UseImage = IsAssetStr;
 			local Icon = Instance.new(UseImage and "ImageLabel" or "TextLabel")
 
 			Frame.Parent = Watermark
@@ -6054,11 +6106,7 @@ function NeverLose:CreateWindow(Config)
 			Icon.ZIndex = 17
 
 			if UseImage then
-				if IsAssetStr then
-					Icon.Image = (tonumber(IconStr) and ('rbxassetid://'..IconStr)) or IconStr;
-				else
-					Icon.Image = NeverLose.GlobalLogo;
-				end;
+				Icon.Image = (tonumber(IconStr) and ('rbxassetid://'..IconStr)) or IconStr;
 
 				Icon.ImageColor3 = NeverLose.IconColor
 				Icon.ImageTransparency = 0.250
