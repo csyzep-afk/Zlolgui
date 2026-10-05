@@ -202,6 +202,12 @@ NeverLose.AccentColor = Color3.fromRGB(78, 127, 252);
 NeverLose.OutlineColor = Color3.fromRGB(255, 45, 45);
 NeverLose.OutlineThickness = 1;
 NeverLose.OutlineStrokes = {};
+NeverLose.OutlineImages = {};
+NeverLose.WatermarkIcons = {
+	Ms = "rbxassetid://91784416371580",
+	Name = "rbxassetid://85651229191800",
+};
+NeverLose.TintWatermarkIcons = true;
 
 function NeverLose:SetOutlineColor(Color)
 	if typeof(Color) == 'string' then
@@ -213,6 +219,12 @@ function NeverLose:SetOutlineColor(Color)
 	for _,Stroke in next , NeverLose.OutlineStrokes do
 		pcall(function()
 			Stroke.Color = Color;
+		end);
+	end;
+
+	for _,Image in next , NeverLose.OutlineImages do
+		pcall(function()
+			Image.ImageColor3 = Color;
 		end);
 	end;
 end;
@@ -6373,7 +6385,20 @@ function NeverLose:CreateWindow(Config)
 			local Frame = Instance.new("Frame")
 			local Content = Instance.new("TextLabel")
 			local IsAssetStr = typeof(IconStr) == 'string' and (string.find(IconStr , 'rbxassetid://' , 1 , true) ~= nil or tonumber(IconStr) ~= nil);
-			local UseImage = IsAssetStr;
+			local LowerName = string.lower(tostring(Name or ""));
+			local IsMs = (not IsAssetStr) and (string.find(LowerName , '%f[%a]ms%f[%A]') ~= nil or string.find(LowerName , 'ping' , 1 , true) ~= nil);
+			local IconAsset = nil;
+
+			if IsAssetStr then
+				IconAsset = (tonumber(IconStr) and ('rbxassetid://'..IconStr)) or IconStr;
+			elseif IsMs then
+				IconAsset = NeverLose.WatermarkIcons.Ms;
+			elseif not Watermark_lb.NameBlockTaken then
+				Watermark_lb.NameBlockTaken = true;
+				IconAsset = NeverLose.WatermarkIcons.Name;
+			end;
+
+			local UseImage = IconAsset ~= nil;
 			local Icon = Instance.new(UseImage and "ImageLabel" or "TextLabel")
 
 			Frame.Parent = Watermark
@@ -6412,10 +6437,20 @@ function NeverLose:CreateWindow(Config)
 			Icon.ZIndex = 17
 
 			if UseImage then
-				Icon.Image = (tonumber(IconStr) and ('rbxassetid://'..IconStr)) or IconStr;
+				Icon.Image = IconAsset;
 
-				Icon.ImageColor3 = NeverLose.IconColor
+				if NeverLose.TintWatermarkIcons then
+					Icon.ImageColor3 = NeverLose.OutlineColor
+					table.insert(NeverLose.OutlineImages , Icon);
+				else
+					Icon.ImageColor3 = NeverLose.IconColor
+				end;
+
 				Icon.ImageTransparency = 0.250
+
+				NeverLose.ResolveImage(IconAsset , function(real)
+					Icon.Image = real;
+				end);
 			else
 				Icon.FontFace = NeverLose.BuiltInBold;
 				Icon.Text = IconStr
