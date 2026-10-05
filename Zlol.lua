@@ -200,6 +200,22 @@ NeverLose.ScreenGui = GlobalWindow;
 NeverLose.Flags = {};
 NeverLose.AccentColor = Color3.fromRGB(78, 127, 252);
 NeverLose.OutlineColor = Color3.fromRGB(255, 45, 45);
+NeverLose.OutlineThickness = 1;
+NeverLose.OutlineStrokes = {};
+
+function NeverLose:SetOutlineColor(Color)
+	if typeof(Color) == 'string' then
+		Color = Color3.fromHex(Color);
+	end;
+
+	NeverLose.OutlineColor = Color;
+
+	for _,Stroke in next , NeverLose.OutlineStrokes do
+		pcall(function()
+			Stroke.Color = Color;
+		end);
+	end;
+end;
 NeverLose.TabIconOverrides = {
 	combat = "rbxassetid://116271048134258",
 };
@@ -1274,7 +1290,7 @@ function NeverLose:CreateOptionWindow(Frame: Frame , Zindex)
 	UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 	UIStroke.Transparency = 0.650
-	UIStroke.Color = NeverLose.OutlineColor
+	UIStroke.Color = Color3.fromRGB(45, 48, 58)
 	UIStroke.Parent = OptionHandler
 
 	NeverLose:AddSignal(UIListLayout:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(LPH_NO_VIRTUALIZE(function()
@@ -1420,7 +1436,7 @@ function NeverLose:CreateColorPicker(HandleFrame: Frame)
 	UICorner.Parent = ColorPickerHandler
 
 	UIStroke.Transparency = 0.650
-	UIStroke.Color = NeverLose.OutlineColor
+	UIStroke.Color = Color3.fromRGB(45, 48, 58)
 	UIStroke.Parent = ColorPickerHandler
 
 	SaViMap.Name = NeverLose.RandomString();
@@ -1937,7 +1953,7 @@ function NeverLose:RegisiterHandler(Handler: Frame , Signal)
 		UICorner_2.Parent = ValueFrame
 
 		UIStroke.Transparency = 0.650
-		UIStroke.Color = NeverLose.OutlineColor
+		UIStroke.Color = Color3.fromRGB(45, 48, 58)
 		UIStroke.Parent = ValueFrame
 
 		ValueLabel.Name = NeverLose.RandomString();
@@ -2312,7 +2328,7 @@ function NeverLose:RegisiterHandler(Handler: Frame , Signal)
 		UICorner.Parent = ColorPicker
 
 		UIStroke.Transparency = 0.650
-		UIStroke.Color = NeverLose.OutlineColor
+		UIStroke.Color = Color3.fromRGB(45, 48, 58)
 		UIStroke.Parent = ColorPicker
 
 		ImageLabel.Parent = ColorPicker
@@ -2437,7 +2453,7 @@ function NeverLose:RegisiterHandler(Handler: Frame , Signal)
 		UICorner.Parent = Keybind
 
 		UIStroke.Transparency = 0.650
-		UIStroke.Color = NeverLose.OutlineColor
+		UIStroke.Color = Color3.fromRGB(45, 48, 58)
 		UIStroke.Parent = Keybind
 
 		ValueLabel.Name = NeverLose.RandomString();
@@ -2592,7 +2608,7 @@ function NeverLose:RegisiterHandler(Handler: Frame , Signal)
 		UICorner.Parent = TextInput
 
 		UIStroke.Transparency = 0.650
-		UIStroke.Color = NeverLose.OutlineColor
+		UIStroke.Color = Color3.fromRGB(45, 48, 58)
 		UIStroke.Parent = TextInput
 
 		TextBox.Parent = TextInput
@@ -2724,7 +2740,7 @@ function NeverLose:RegisiterHandler(Handler: Frame , Signal)
 		UICorner.Parent = Dropdown
 
 		UIStroke.Transparency = 0.650
-		UIStroke.Color = NeverLose.OutlineColor
+		UIStroke.Color = Color3.fromRGB(45, 48, 58)
 		UIStroke.Parent = Dropdown
 
 		BasedLabel.Name = NeverLose.RandomString();
@@ -2850,7 +2866,7 @@ function NeverLose:RegisiterHandler(Handler: Frame , Signal)
 			UICorner.Parent = DropdownHandler
 
 			UIStroke.Transparency = 0.650
-			UIStroke.Color = NeverLose.OutlineColor
+			UIStroke.Color = Color3.fromRGB(45, 48, 58)
 			UIStroke.Parent = DropdownHandler
 
 			DropdownScrollFrame.Name = NeverLose.RandomString();
@@ -3270,7 +3286,7 @@ function NeverLose:CreateToolTips(Container: Frame , Name: string , Content: str
 	UICorner.Parent = Tooltips
 
 	UIStroke.Transparency = 0.650
-	UIStroke.Color = NeverLose.OutlineColor
+	UIStroke.Color = Color3.fromRGB(45, 48, 58)
 	UIStroke.Parent = Tooltips
 
 	TooltipName.Name = NeverLose.RandomString();
@@ -3927,9 +3943,11 @@ function NeverLose:CreateWindow(Config)
 	local WindowStroke = Instance.new("UIStroke");
 
 	WindowStroke.Color = NeverLose.OutlineColor;
-	WindowStroke.Thickness = 1.5;
+	WindowStroke.Thickness = NeverLose.OutlineThickness;
 	WindowStroke.Transparency = 1;
 	WindowStroke.Parent = WindowFrame;
+
+	table.insert(NeverLose.OutlineStrokes , WindowStroke);
 
 	if not NeverLose.EnabledBlur then
 		WindowFrame.BackgroundTransparency = 0.0255
@@ -4388,7 +4406,7 @@ function NeverLose:CreateWindow(Config)
 	RightMenuFrame.ZIndex = 8
 
 	UIStroke.Transparency = 0.650
-	UIStroke.Color = NeverLose.OutlineColor
+	UIStroke.Color = Color3.fromRGB(45, 48, 58)
 	UIStroke.Parent = RightMenuFrame
 
 	UICorner_4.CornerRadius = UDim.new(0, 13)
@@ -4426,7 +4444,7 @@ function NeverLose:CreateWindow(Config)
 	ConfigFrame.ZIndex = 9
 
 	UIStroke_2.Transparency = 0.650
-	UIStroke_2.Color = NeverLose.OutlineColor
+	UIStroke_2.Color = Color3.fromRGB(45, 48, 58)
 	UIStroke_2.Parent = ConfigFrame
 
 	UICorner_5.CornerRadius = UDim.new(0, 4)
@@ -5077,7 +5095,7 @@ function NeverLose:CreateWindow(Config)
 			SectionHandler.ZIndex = 9
 
 			UIStroke.Transparency = 0.650
-			UIStroke.Color = NeverLose.OutlineColor
+			UIStroke.Color = Color3.fromRGB(45, 48, 58)
 			UIStroke.Parent = SectionHandler
 
 			UICorner.CornerRadius = UDim.new(0, 10)
@@ -5280,7 +5298,7 @@ function NeverLose:CreateWindow(Config)
 		UIListLayout.Padding = UDim.new(0, 4)
 
 		UIStroke.Transparency = 0.650
-		UIStroke.Color = NeverLose.OutlineColor
+		UIStroke.Color = Color3.fromRGB(45, 48, 58)
 		UIStroke.Parent = ConfigMenu
 
 		InputFrame.Name = NeverLose.RandomString();
@@ -5363,7 +5381,7 @@ function NeverLose:CreateWindow(Config)
 		UICorner_2.Parent = TextInput
 
 		UIStroke_2.Transparency = 0.650
-		UIStroke_2.Color = NeverLose.OutlineColor
+		UIStroke_2.Color = Color3.fromRGB(45, 48, 58)
 		UIStroke_2.Parent = TextInput
 
 		TextBox.Parent = TextInput
@@ -5652,7 +5670,7 @@ function NeverLose:CreateWindow(Config)
 				BasedLabel.TextXAlignment = Enum.TextXAlignment.Left
 
 				UIStroke.Transparency = 0.500
-				UIStroke.Color = NeverLose.OutlineColor
+				UIStroke.Color = Color3.fromRGB(45, 48, 58)
 				UIStroke.Parent = ConfigItemFrame
 
 				local Render = LPH_NO_VIRTUALIZE(function(rst)
@@ -6063,6 +6081,19 @@ function NeverLose:CreateWindow(Config)
 
 		local AutoLabel = AutoSection:AddLabel("Auto Load: None");
 
+		local InterfaceSection = SettingsTab:AddSection({
+			Name = "INTERFACE",
+			Position = "right",
+		});
+
+		InterfaceSection:AddLabel("UI Stroke Color"):AddColorPicker({
+			Default = NeverLose.OutlineColor,
+			Flag = "UIStrokeColor",
+			Callback = function(color)
+				NeverLose:SetOutlineColor(color);
+			end,
+		});
+
 		local function RefreshAll()
 			local list = ConfigLib:GetList();
 
@@ -6258,6 +6289,15 @@ function NeverLose:CreateWindow(Config)
 		UICorner.CornerRadius = UDim.new(0, 25)
 		UICorner.Parent = Watermark
 
+		local WatermarkStroke = Instance.new("UIStroke")
+
+		WatermarkStroke.Color = NeverLose.OutlineColor
+		WatermarkStroke.Thickness = NeverLose.OutlineThickness
+		WatermarkStroke.Transparency = 0.15
+		WatermarkStroke.Parent = Watermark
+
+		table.insert(NeverLose.OutlineStrokes , WatermarkStroke);
+
 		UIListLayout.Parent = Watermark
 		UIListLayout.FillDirection = Enum.FillDirection.Horizontal
 		UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -6301,6 +6341,10 @@ function NeverLose:CreateWindow(Config)
 					BackgroundTransparency = 0.200
 				})
 
+				NeverLose.PlayAnimate(WatermarkStroke,SlowyTween , {
+					Transparency = 0.15
+				})
+
 				Shadow:Render(true);
 
 				for i,v in next , Watermark_lb.Renders do
@@ -6309,6 +6353,10 @@ function NeverLose:CreateWindow(Config)
 			else
 				NeverLose.PlayAnimate(Watermark,SlowyTween , {
 					BackgroundTransparency = 1
+				})
+
+				NeverLose.PlayAnimate(WatermarkStroke,SlowyTween , {
+					Transparency = 1
 				})
 
 				Shadow:Render(false);
@@ -6525,7 +6573,7 @@ function NeverLose:CreateNotification()
 		UICorner.Parent = NotifyFrame
 
 		UIStroke.Transparency = 0.650
-		UIStroke.Color = NeverLose.OutlineColor
+		UIStroke.Color = Color3.fromRGB(45, 48, 58)
 		UIStroke.Parent = NotifyFrame
 
 		LogoImage.Name = NeverLose.RandomString();
@@ -6688,7 +6736,7 @@ function NeverLose:CreateLogger()
 		UICorner.Parent = LogFrame
 
 		UIStroke.Transparency = 1--0.650
-		UIStroke.Color = NeverLose.OutlineColor
+		UIStroke.Color = Color3.fromRGB(45, 48, 58)
 		UIStroke.Parent = LogFrame
 
 		LogContent.Name = NeverLose.RandomString();
