@@ -5526,7 +5526,9 @@ function NeverLose:CreateWindow(Config)
 
 				local name = string.sub(v , #Window.ConfigFolder + 2);
 
-				table.insert(ConfigList , name)
+				if name ~= '__autoload' then
+					table.insert(ConfigList , name)
+				end;
 			end;
 
 			for i,ConfigNameStr in next , ConfigList do
@@ -5782,33 +5784,156 @@ function NeverLose:CreateWindow(Config)
 			table.clear(ConfigList);
 		end;
 		
-		task.delay(1,function()
-			if ConfigLib.SelectedConfig == "Default" then
-				local path = Window.ConfigFolder..'/Default';
-				local ConfigNameStr = "Default";
-				
-				if isfile(path) then
-					local data = readfile(path);
+		ConfigLib.Changed = NeverLose:CreateSignal(0);
 
-					ConfigLib:LoadData(data);
+		local function ConfigPath(name)
+			return Window.ConfigFolder..'/'..tostring(name);
+		end;
 
-					ConfigLib.SelectedConfig = ConfigNameStr;
-					ConfigName.Text = ConfigNameStr;
+		function ConfigLib:GetList()
+			local list = {};
 
-					UpdateSize();
+			if isfolder(Window.ConfigFolder) then
+				for _,v in next , listfiles(Window.ConfigFolder) do
+					local name = string.sub(v , #Window.ConfigFolder + 2);
 
-					ConfigLib:RefreshConfig();
-
-					Logging.new("folder","Loaded Default Config",3.5);
-					
-					task.spawn(function()
-						while true do task.wait(5.75);
-							if isfile(path) and ConfigLib.SelectedConfig == "Default" then
-								writefile(Window.ConfigFolder..'/Default',ConfigLib:GetData(true));
-							end;
-						end;
-					end);
+					if name ~= '__autoload' then
+						table.insert(list , name);
+					end;
 				end;
+			end;
+
+			table.sort(list);
+
+			return list;
+		end;
+
+		function ConfigLib:Select(name)
+			ConfigLib.SelectedConfig = name;
+			ConfigName.Text = name;
+
+			UpdateSize();
+		end;
+
+		function ConfigLib:Save(name)
+			name = name or ConfigLib.SelectedConfig or "Default";
+
+			writefile(ConfigPath(name) , ConfigLib:GetData());
+
+			ConfigLib:Select(name);
+			ConfigLib:RefreshConfig();
+
+			Logging.new("folder",'Saved '..tostring(name),3.5);
+			ConfigLib.Changed:SetValue(tick());
+
+			return true;
+		end;
+
+		function ConfigLib:Load(name)
+			name = name or ConfigLib.SelectedConfig or "Default";
+
+			if not isfile(ConfigPath(name)) then
+				Logging.new("triangle-exclamation",'Config not found: '..tostring(name),3.5);
+
+				return false;
+			end;
+
+			local ok = pcall(function()
+				ConfigLib:LoadData(readfile(ConfigPath(name)));
+			end);
+
+			if not ok then
+				Logging.new("triangle-exclamation",'Failed to load '..tostring(name),3.5);
+
+				return false;
+			end;
+
+			ConfigLib:Select(name);
+			ConfigLib:RefreshConfig();
+
+			Logging.new("folder",'Loaded '..tostring(name),3.5);
+			ConfigLib.Changed:SetValue(tick());
+
+			return true;
+		end;
+
+		function ConfigLib:GetAutoLoad()
+			local path = ConfigPath('__autoload');
+
+			if isfile(path) then
+				local name = readfile(path);
+
+				if name and name:byte() then
+					return name;
+				end;
+			end;
+
+			return nil;
+		end;
+
+		function ConfigLib:SetAutoLoad(name)
+			if not name or not isfile(ConfigPath(name)) then
+				Logging.new("triangle-exclamation",'Config not found: '..tostring(name),3.5);
+
+				return false;
+			end;
+
+			writefile(ConfigPath('__autoload') , name);
+
+			Logging.new("folder",'Auto load set: '..tostring(name),3.5);
+			ConfigLib.Changed:SetValue(tick());
+
+			return true;
+		end;
+
+		function ConfigLib:RemoveAutoLoad(silent)
+			if isfile(ConfigPath('__autoload')) then
+				delfile(ConfigPath('__autoload'));
+			end;
+
+			if not silent then
+				Logging.new("folder",'Auto load removed',3.5);
+			end;
+
+			ConfigLib.Changed:SetValue(tick());
+
+			return true;
+		end;
+
+		function ConfigLib:Delete(name)
+			if name == "Default" then
+				Logging.new("trash-can","You can't delete default config!",3.5);
+
+				return false;
+			end;
+
+			if not name or not isfile(ConfigPath(name)) then
+				return false;
+			end;
+
+			delfile(ConfigPath(name));
+
+			if ConfigLib:GetAutoLoad() == name then
+				ConfigLib:RemoveAutoLoad(true);
+			end;
+
+			if ConfigLib.SelectedConfig == name then
+				ConfigLib:Select("Default");
+			end;
+
+			ConfigLib:RefreshConfig();
+
+			Logging.new("trash-can",'Deleted '..tostring(name),3.5);
+			ConfigLib.Changed:SetValue(tick());
+
+			return true;
+		end;
+
+		task.delay(1.5,function()
+			local auto = ConfigLib:GetAutoLoad();
+
+			if auto and isfile(ConfigPath(auto)) then
+				ConfigLib:Load(auto);
 			end;
 		end);
 
@@ -5894,7 +6019,140 @@ function NeverLose:CreateWindow(Config)
 		return ConfigLib;
 	end;
 
-	Window:_InitConfig();
+	Window.ConfigLib = Window:_InitConfig();
+
+	function Window:_InitSettings()
+		local ConfigLib = Window.ConfigLib;
+		local SettingsTab = Window:AddTab({
+			Name = "Settings",
+			Icon = "gear",
+		});
+
+		SettingsTab.Idx.LayoutOrder = 9999;
+
+		local Selected = ConfigLib.SelectedConfig or "Default";
+		local NewName = "";
+
+		local ConfigSection = SettingsTab:AddSection({
+			Name = "CONFIGS",
+			Position = "left",
+		});
+
+		local AutoSection = SettingsTab:AddSection({
+			Name = "AUTO LOAD",
+			Position = "right",
+		});
+
+		local ListDropdown = ConfigSection:AddLabel("Config List"):AddDropdown({
+			Values = ConfigLib:GetList(),
+			Default = Selected,
+			Size = 120,
+			Callback = function(value)
+				Selected = value;
+			end,
+		});
+
+		ConfigSection:AddLabel("Config Name"):AddTextInput({
+			Default = "",
+			Placeholder = "Config Name ...",
+			Size = 120,
+			Callback = function(value)
+				NewName = tostring(value or "");
+			end,
+		});
+
+		local AutoLabel = AutoSection:AddLabel("Auto Load: None");
+
+		local function RefreshAll()
+			local list = ConfigLib:GetList();
+
+			if not table.find(list , Selected) then
+				Selected = ConfigLib.SelectedConfig or "Default";
+			end;
+
+			ListDropdown:SetValues(list);
+			ListDropdown:SetValue(Selected);
+
+			AutoLabel:SetText("Auto Load: "..tostring(ConfigLib:GetAutoLoad() or "None"));
+		end;
+
+		ConfigSection:AddButton({
+			Name = "Create Config",
+			Icon = "plus-large",
+			Callback = function()
+				local name = string.match(NewName , '^%s*(.-)%s*$') or "";
+
+				name = string.sub(name , 1 , 24);
+
+				if name == "" or name == "__autoload" or name:find('/' , 1 , true) or name:find('\\' , 1 , true) then
+					return;
+				end;
+
+				Selected = name;
+				ConfigLib:Save(name);
+			end,
+		});
+
+		ConfigSection:AddButton({
+			Name = "Save Config",
+			Icon = "floppy-disk",
+			Callback = function()
+				ConfigLib:Save(Selected);
+			end,
+		});
+
+		ConfigSection:AddButton({
+			Name = "Load Config",
+			Icon = "arrow-right-from-portrait-rectangle",
+			Callback = function()
+				ConfigLib:Load(Selected);
+			end,
+		});
+
+		ConfigSection:AddButton({
+			Name = "Delete Config",
+			Icon = "trash-can",
+			Callback = function()
+				if ConfigLib:Delete(Selected) then
+					Selected = ConfigLib.SelectedConfig or "Default";
+				end;
+			end,
+		});
+
+		AutoSection:AddButton({
+			Name = "Set Auto Load Config",
+			Icon = "circle-check",
+			Callback = function()
+				ConfigLib:SetAutoLoad(Selected);
+			end,
+		});
+
+		AutoSection:AddButton({
+			Name = "Remove Auto Load Config",
+			Icon = "circle-x",
+			Callback = function()
+				ConfigLib:RemoveAutoLoad();
+			end,
+		});
+
+		ConfigLib.Changed:Connect(RefreshAll);
+
+		RefreshAll();
+
+		return SettingsTab;
+	end;
+
+	task.spawn(function()
+		local started = tick();
+
+		while #Window.Tabs == 0 and (tick() - started) < 10 do
+			task.wait(0.1);
+		end;
+
+		task.wait(0.5);
+
+		Window:_InitSettings();
+	end);
 
 	local UserSettings = NeverLose:CreateOptionWindow(BottomFrame , BottomFrame.ZIndex + 13);
 	local reciveSignal;
