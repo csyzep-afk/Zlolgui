@@ -228,8 +228,13 @@ function NeverLose:SetOutlineColor(Color)
 		end);
 	end;
 end;
+NeverLose.InfoLinks = {
+	Telegram = "https://t.me/YOUR_TELEGRAM",
+	Discord = "https://discord.gg/YOUR_DISCORD",
+};
+NeverLose.InfoBanner = "rbxassetid://128030165289294";
 NeverLose.TabIconOverrides = {
-	combat = "rbxassetid://89027248483632",
+	combat = "rbxassetid://112351564221103",
 	info = "rbxassetid://82807768403375",
 };
 
@@ -6068,30 +6073,107 @@ function NeverLose:CreateWindow(Config)
 			Position = "left",
 		});
 
+		local function Copy(text)
+			local fn = setclipboard or toclipboard or (syn and syn.write_clipboard);
+
+			pcall(function()
+				fn(text);
+			end);
+		end;
+
+		-- ряд из двух кнопок рядом: Copy Telegram | Copy Discord
+		local ButtonRow = Instance.new("Frame")
+
+		ButtonRow.Name = NeverLose.RandomString();
+		ButtonRow.Parent = InfoSection.Root
+		ButtonRow.BackgroundTransparency = 1.000
+		ButtonRow.BorderSizePixel = 0
+		ButtonRow.Size = UDim2.new(1, 0, 0, 34)
+		ButtonRow.ZIndex = 12
+
+		local function MakeButton(Text, Side, Link)
+			local Button = Instance.new("TextButton")
+			local Corner = Instance.new("UICorner")
+			local Stroke = Instance.new("UIStroke")
+
+			Button.Name = NeverLose.RandomString();
+			Button.Parent = ButtonRow
+			Button.AutoButtonColor = false
+			Button.AnchorPoint = Vector2.new(Side == 0 and 0 or 1, 0.5)
+			Button.BackgroundColor3 = Color3.fromRGB(25, 27, 33)
+			Button.BackgroundTransparency = 0.3
+			Button.BorderSizePixel = 0
+			Button.Position = UDim2.new(Side, Side == 0 and 5 or -5, 0.5, 0)
+			Button.Size = UDim2.new(0.5, -10, 0, 28)
+			Button.ZIndex = 13
+			Button.Font = Enum.Font.GothamMedium
+			Button.Text = Text
+			Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Button.TextSize = 13.000
+			Button.TextTransparency = 0.15
+
+			Corner.CornerRadius = UDim.new(0, 4)
+			Corner.Parent = Button
+
+			Stroke.Color = Color3.fromRGB(45, 48, 58)
+			Stroke.Parent = Button
+
+			Button.MouseEnter:Connect(function()
+				NeverLose.PlayAnimate(Button , SlowyTween , {
+					BackgroundTransparency = 0.05
+				})
+			end);
+
+			Button.MouseLeave:Connect(function()
+				NeverLose.PlayAnimate(Button , SlowyTween , {
+					BackgroundTransparency = 0.3
+				})
+			end);
+
+			Button.MouseButton1Click:Connect(function()
+				Copy(Link());
+
+				pcall(function()
+					Logging.new("folder" , 'Copied: '..Text , 3.5);
+				end);
+			end);
+
+			return Button;
+		end;
+
+		MakeButton("Copy Telegram" , 0 , function() return NeverLose.InfoLinks.Telegram end);
+		MakeButton("Copy Discord" , 1 , function() return NeverLose.InfoLinks.Discord end);
+
+		-- большая картинка почти на всю GUI
 		local Holder = Instance.new("Frame")
-		local Avatar = Instance.new("ImageLabel")
+		local Banner = Instance.new("ImageLabel")
 
 		Holder.Name = NeverLose.RandomString();
 		Holder.Parent = InfoSection.Root
 		Holder.BackgroundTransparency = 1.000
 		Holder.BorderSizePixel = 0
-		Holder.Size = UDim2.new(1, 0, 0, 270)
+		Holder.Size = UDim2.new(1, 0, 0, 300)
 		Holder.ZIndex = 12
 
-		Avatar.Name = NeverLose.RandomString();
-		Avatar.Parent = Holder
-		Avatar.AnchorPoint = Vector2.new(0.5, 0.5)
-		Avatar.BackgroundTransparency = 1.000
-		Avatar.BorderSizePixel = 0
-		Avatar.Position = UDim2.new(0.5, 0, 0.5, 0)
-		Avatar.Size = UDim2.new(0, 250, 0, 250)
-		Avatar.ZIndex = 13
-		Avatar.ScaleType = Enum.ScaleType.Fit
-		Avatar.Image = "rbxthumb://type=Avatar&id="..tostring(LocalPlayer.UserId).."&w=420&h=420"
-		Avatar.ImageTransparency = (InfoTab.Signal:GetValue() and 0) or 1
+		Banner.Name = NeverLose.RandomString();
+		Banner.Parent = Holder
+		Banner.AnchorPoint = Vector2.new(0.5, 0.5)
+		Banner.BackgroundTransparency = 1.000
+		Banner.BorderSizePixel = 0
+		Banner.Position = UDim2.new(0.5, 0, 0.5, 0)
+		Banner.Size = UDim2.new(1, -10, 1, -10)
+		Banner.ZIndex = 13
+		Banner.ScaleType = Enum.ScaleType.Fit
+		Banner.Image = NeverLose.InfoBanner
+		Banner.ImageTransparency = (InfoTab.Signal:GetValue() and 0) or 1
+
+		-- если ID — Decal, достаём из него настоящую картинку
+		NeverLose.ResolveImage(NeverLose.InfoBanner , function(real)
+			Banner.Image = real;
+		end);
 
 		InfoTab.Signal:Connect(function(value)
-			NeverLose.PlayAnimate(Avatar , SlowyTween , {
+			NeverLose.PlayAnimate(Banner , SlowyTween , {
 				ImageTransparency = (value and 0) or 1
 			})
 		end);
