@@ -229,7 +229,8 @@ function NeverLose:SetOutlineColor(Color)
 	end;
 end;
 NeverLose.TabIconOverrides = {
-	combat = "rbxassetid://116271048134258",
+	combat = "rbxassetid://89027248483632",
+	info = "rbxassetid://82807768403375",
 };
 
 -- Если ID относится к Decal, достаём из него настоящую картинку (Texture)
