@@ -236,6 +236,13 @@ NeverLose.InfoBanner = "rbxassetid://128030165289294";
 NeverLose.TabIconOverrides = {
 	combat = "rbxassetid://112351564221103",
 	info = "rbxassetid://82807768403375",
+	guns = "rbxassetid://82797306251206",
+};
+
+-- размер иконки вкладки в пикселях (по умолчанию 20, максимум ~28 при высоте вкладки 30)
+NeverLose.TabIconSizes = {
+	combat = 27,
+	info = 27,
 };
 
 -- Если ID относится к Decal, достаём из него настоящую картинку (Texture)
@@ -4844,8 +4851,10 @@ function NeverLose:CreateWindow(Config)
 				TabImage.AnchorPoint = Vector2.new(0, 0.5)
 				TabImage.BackgroundTransparency = 1.000
 				TabImage.BorderSizePixel = 0
-				TabImage.Position = UDim2.new(0, 5, 0.5, 0)
-				TabImage.Size = UDim2.new(0, 20, 0, 20)
+				local IconSize = NeverLose.TabIconSizes[string.lower(tostring(Config.Name))] or 20;
+
+				TabImage.Position = UDim2.new(0, math.max(1 , math.floor((30 - IconSize) / 2)), 0.5, 0)
+				TabImage.Size = UDim2.new(0, IconSize, 0, IconSize)
 				TabImage.ZIndex = 9
 				TabImage.Image = CustomIcon
 				TabImage.ImageColor3 = NeverLose.IconColor
